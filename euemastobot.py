@@ -49,8 +49,7 @@ def get_time_slots():
 def post_timeslots_to_mastodon(time_slots):
     mastodon = Mastodon(
         api_base_url="https://ruhr.social",
-        client_id=os.getenv["CLIENT_ID"],
-        client_secret=os.getenv["CLIENT_SECRET"],
+        access_token=os.getenv("ACCESS_TOKEN"),
     )
     slot_text = ", ".join(["{} - {}".format(slot[0], slot[1]) for slot in time_slots])
     status_text = """Der Anteil der erneuerbaren Energien in Deutschland liegt voraussichtlich heute zwischen {} über {}%.
