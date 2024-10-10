@@ -64,7 +64,8 @@ Daten via https://energy-charts.info/charts/consumption_advice/chart.htm""".form
 
 if __name__ == "__main__":
     FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
-    logging.basicConfig(level=logging.INFO, format=FORMAT)
+    date_format = '%d.%m. %H:%M:%S'
+    logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt=date_format)
     logger = logging.getLogger("euemastobot")
 
     time_slots = None
