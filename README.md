@@ -7,3 +7,10 @@ Das Script nutzt die API von Energy Charts (https://api.energy-charts.info/).
 
 Der Bot läuft aktuell unter https://ruhr.social/@erneuerbarer_ueberschuss
 
+Permissions
+===========
+Diese Permissions braucht die Mastodon-Applikation, um Beiträge mit Medien zu veröffentlichen:
+
+* read
+* write:statuses
+* write:media
