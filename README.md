@@ -14,3 +14,15 @@ Diese Permissions braucht die Mastodon-Applikation, um Beiträge mit Medien zu v
 * read
 * write:statuses
 * write:media
+
+Installation
+============
+
+pipenv install oder pipenv install --dev sollte ausreichen
+
+Danach muss für die Screenshots Folgendes ausgeführt werden:
+
+pipenv shell
+playwright install
+
+Damit wird Chromium installiert, mit dem die Screenshots erzeugt werden.
