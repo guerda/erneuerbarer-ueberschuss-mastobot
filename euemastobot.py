@@ -4,8 +4,11 @@ import dotenv
 import logging
 import os
 import requests
+import asyncio
+from playwright.async_api import async_playwright
 
 threshold = 100
+mastodon = None
 
 
 def get_time_slots():
@@ -46,25 +49,57 @@ def get_time_slots():
     return slots
 
 
-def post_timeslots_to_mastodon(time_slots):
-    mastodon = Mastodon(
-        api_base_url="https://ruhr.social",
-        access_token=os.getenv("ACCESS_TOKEN"),
-    )
+def get_mastodon_client():
+    global mastodon
+    if mastodon is None:
+        logger.info("Create new Mastodon client")
+        mastodon = Mastodon(
+            api_base_url="https://ruhr.social",
+            access_token=os.getenv("ACCESS_TOKEN"),
+        )
+    return mastodon
+
+
+def post_timeslots_to_mastodon(time_slots, attach_screenshot=False, media_id=None):
+    mastodon = get_mastodon_client()
     slot_text = ", ".join(["{} - {}".format(slot[0], slot[1]) for slot in time_slots])
     status_text = """Der Anteil der erneuerbaren Energien in Deutschland liegt voraussichtlich heute zwischen {} über {}%.
 
 Daten via https://energy-charts.info/charts/consumption_advice/chart.htm""".format(
         slot_text, threshold
     )
-    status = mastodon.status_post(status_text, language="de")
+    status = mastodon.status_post(status_text, language="de", media_ids=media_id)
     logger.info("Posted status #{} ({})".format(status["id"], status["created_at"]))
     return status["url"]
 
 
+async def create_screenshot_of_traffic_light():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page(locale="de-DE")
+        await page.set_viewport_size({"width": 765, "height": 500})
+        await page.goto(
+            "https://energy-charts.info/charts/consumption_advice/chart.htm?l=de&c=DE"
+        )
+        await page.locator("div#inhalt .chartCard:first-child").screenshot(
+            path="stromampel.png"
+        )
+        await browser.close()
+    logger.info("Created screenshot")
+    mastodon = get_mastodon_client()
+    result = mastodon.media_post(
+        "stromampel.png",
+        description="Screenshot of energy-charts.info"
+        "s traffic light for energy production",
+        file_name="Stromampel.png",
+    )
+    logger.info("Uploaded screenshot with ID {}".format(result["id"]))
+    return result["id"]
+
+
 if __name__ == "__main__":
     FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
-    date_format = '%d.%m. %H:%M:%S'
+    date_format = "%d.%m. %H:%M:%S"
     logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt=date_format)
     logger = logging.getLogger("euemastobot")
 
@@ -72,7 +107,7 @@ if __name__ == "__main__":
     try:
         time_slots = get_time_slots()
     except Exception as e:
-        logging.exception("Could not get forecast data", e)
+        logger.exception("Could not get forecast data", e)
 
     if time_slots is not None:
         if len(time_slots) == 0:
@@ -83,5 +118,10 @@ if __name__ == "__main__":
             )
         else:
             dotenv.load_dotenv()
-            post_url = post_timeslots_to_mastodon(time_slots)
+            media_id = None
+            try:
+                media_id = asyncio.run(create_screenshot_of_traffic_light())
+            except Exception as e:
+                logger.error("Could not create screenshot", e)
+            post_url = post_timeslots_to_mastodon(time_slots, media_id=media_id)
             logger.info("Successfully posted: {}".format(post_url))
