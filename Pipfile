@@ -7,6 +7,7 @@ name = "pypi"
 requests = "*"
 "mastodon.py" = "*"
 python-dotenv = "*"
+playwright = "*"
 
 [dev-packages]
 ruff = "*"
