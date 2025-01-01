@@ -6,6 +6,7 @@ import os
 import requests
 import asyncio
 from playwright.async_api import async_playwright
+import locale
 
 threshold = 100
 mastodon = None
@@ -44,7 +45,7 @@ def get_slots_from_forecast(forecast):
     # If the threshold was exceeded at the end, has it been added to the array yet?
     if not added:
         start_text = datetime.fromtimestamp(start).strftime("%H:%M")
-        end_text = "0:00"
+        end_text = "00:00"
         slots.append((start_text, end_text))
     return slots
 
@@ -78,15 +79,17 @@ def get_mastodon_client():
 
 def post_timeslots_to_mastodon(time_slots, attach_screenshot=False, media_id=None):
     mastodon = get_mastodon_client()
+    day_of_week = datetime.today().strftime("%A")
     slot_text = ", ".join(["{} - {}".format(slot[0], slot[1]) for slot in time_slots])
-    status_text = """Der Anteil der erneuerbaren Energien in Deutschland liegt voraussichtlich heute zwischen {} über {}%.
+    status_text = """Am heutigen {} liegt zwischen zwischen {} der Anteil der erneuerbaren Energien in Deutschland voraussichtlich über {}%.
 
 Daten via https://energy-charts.info/charts/consumption_advice/chart.htm""".format(
-        slot_text, threshold
+        day_of_week, slot_text, threshold
     )
-    status = mastodon.status_post(status_text, language="de", media_ids=media_id)
-    logger.info("Posted status #{} ({})".format(status["id"], status["created_at"]))
-    return status["url"]
+    logger.debug(status_text)
+    #status = mastodon.status_post(status_text, language="de", media_ids=media_id)
+    #logger.info("Posted status #{} ({})".format(status["id"], status["created_at"]))
+    #return status["url"]
 
 
 async def create_screenshot_of_traffic_light():
@@ -116,8 +119,10 @@ async def create_screenshot_of_traffic_light():
 if __name__ == "__main__":
     FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
     date_format = "%d.%m. %H:%M:%S"
-    logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt=date_format)
+    logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt=date_format)
     logger = logging.getLogger("euemastobot")
+
+    locale.setlocale(locale.LC_TIME, "de_DE") 
 
     time_slots = None
     try:
@@ -136,8 +141,9 @@ if __name__ == "__main__":
             dotenv.load_dotenv()
             media_id = None
             try:
-                media_id = asyncio.run(create_screenshot_of_traffic_light())
+                #media_id = asyncio.run(create_screenshot_of_traffic_light())
+                pass
             except Exception as e:
                 logger.error("Could not create screenshot", e)
             post_url = post_timeslots_to_mastodon(time_slots, media_id=media_id)
-            logger.info("Successfully posted: {}".format(post_url))
+            #logger.info("Successfully posted: {}".format(post_url))
