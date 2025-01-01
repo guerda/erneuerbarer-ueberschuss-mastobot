@@ -11,6 +11,44 @@ threshold = 100
 mastodon = None
 
 
+def get_slots_from_forecast(forecast):
+    i = 0
+    filter_above_threshold = []
+    for row in forecast["ren_share"]:
+        if row > threshold:
+            filter_above_threshold.append(1)
+        else:
+            filter_above_threshold.append(0)
+        i += 1
+    logging.debug("Above threshold: ")
+    logging.debug(filter_above_threshold)
+    start = 0
+    previous = 0
+    slots = []
+    i = 0
+    added = True
+    for time_slice in filter_above_threshold:
+        if time_slice != previous:
+            previous = time_slice
+            if time_slice == 1:
+                start = forecast["unix_seconds"][i]
+                added = False
+            elif time_slice == 0:
+                end = forecast["unix_seconds"][i - 1]
+                start_text = datetime.fromtimestamp(start).strftime("%H:%M")
+                end_text = datetime.fromtimestamp(end).strftime("%H:%M")
+                slots.append((start_text, end_text))
+                added = True
+        i += 1
+
+    # If the threshold was exceeded at the end, has it been added to the array yet?
+    if not added:
+        start_text = datetime.fromtimestamp(start).strftime("%H:%M")
+        end_text = "0:00"
+        slots.append((start_text, end_text))
+    return slots
+
+
 def get_time_slots():
     api_url = "https://api.energy-charts.info/ren_share_forecast?country=de"
     headers = {
@@ -22,29 +60,7 @@ def get_time_slots():
     logger.info("got the forecast data")
     forecast = r.json()
 
-    i = 0
-    filter_above_threshold = []
-    for row in forecast["ren_share"]:
-        if row > threshold:
-            filter_above_threshold.append(1)
-        else:
-            filter_above_threshold.append(0)
-        i += 1
-
-    previous = 0
-    slots = []
-    i = 0
-    for time_slice in filter_above_threshold:
-        if time_slice != previous:
-            previous = time_slice
-            if time_slice == 1:
-                start = forecast["unix_seconds"][i]
-            elif time_slice == 0:
-                end = forecast["unix_seconds"][i - 1]
-                start_text = datetime.fromtimestamp(start).strftime("%H:%M")
-                end_text = datetime.fromtimestamp(end).strftime("%H:%M")
-                slots.append((start_text, end_text))
-        i += 1
+    slots = get_slots_from_forecast(forecast)
 
     return slots
 
