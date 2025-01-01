@@ -1,4 +1,5 @@
 import euemastobot as bot
+import json
 
 def test_timeslot_without_threshold():
     forecast = _create_forecast_object([50, 60, 30])
@@ -40,6 +41,19 @@ def test_timeslot_with_threshold_at_start_and_end():
     result = bot.get_slots_from_forecast(forecast)
     print(result)
     assert len(result) == 2
+    
+
+def test_real_forecasts_from_api_whole_day():
+    with open("test_data/whole_day_above_threshold.json", "r") as file:
+        forecast = json.load(file)
+        slots = bot.get_slots_from_forecast(forecast)
+        assert len(slots) == 1
+
+def test_real_forecasts_from_api_two_slots():
+    with open("test_data/two_slots_ending_the_day.json", "r") as file:
+        forecast = json.load(file)
+        slots = bot.get_slots_from_forecast(forecast)
+        assert len(slots) == 2
 
 def _create_forecast_object(percentages):
     # skipping objects solar_share, wind_onshore_share and wind_offshore_share
