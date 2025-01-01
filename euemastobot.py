@@ -87,9 +87,9 @@ Daten via https://energy-charts.info/charts/consumption_advice/chart.htm""".form
         day_of_week, slot_text, threshold
     )
     logger.debug(status_text)
-    #status = mastodon.status_post(status_text, language="de", media_ids=media_id)
-    #logger.info("Posted status #{} ({})".format(status["id"], status["created_at"]))
-    #return status["url"]
+    status = mastodon.status_post(status_text, language="de", media_ids=media_id)
+    logger.info("Posted status #{} ({})".format(status["id"], status["created_at"]))
+    return status["url"]
 
 
 async def create_screenshot_of_traffic_light():
@@ -141,9 +141,8 @@ if __name__ == "__main__":
             dotenv.load_dotenv()
             media_id = None
             try:
-                #media_id = asyncio.run(create_screenshot_of_traffic_light())
-                pass
+                media_id = asyncio.run(create_screenshot_of_traffic_light())
             except Exception as e:
                 logger.error("Could not create screenshot", e)
             post_url = post_timeslots_to_mastodon(time_slots, media_id=media_id)
-            #logger.info("Successfully posted: {}".format(post_url))
+            logger.info("Successfully posted: {}".format(post_url))
