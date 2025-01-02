@@ -122,7 +122,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt=date_format)
     logger = logging.getLogger("euemastobot")
 
-    locale.setlocale(locale.LC_TIME, "de_DE") 
+    locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
 
     time_slots = None
     try:
