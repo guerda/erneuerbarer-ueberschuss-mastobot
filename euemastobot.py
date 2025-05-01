@@ -81,7 +81,7 @@ def post_timeslots_to_mastodon(time_slots, attach_screenshot=False, media_id=Non
     mastodon = get_mastodon_client()
     day_of_week = datetime.today().strftime("%A")
     slot_text = ", ".join(["{} - {}".format(slot[0], slot[1]) for slot in time_slots])
-    status_text = """Am heutigen {} liegt zwischen zwischen {} der Anteil der erneuerbaren Energien in Deutschland voraussichtlich über {}%.
+    status_text = """Am heutigen {} liegt zwischen {} der Anteil der erneuerbaren Energien in Deutschland voraussichtlich über {}%.
 
 Daten via https://energy-charts.info/charts/consumption_advice/chart.htm""".format(
         day_of_week, slot_text, threshold
