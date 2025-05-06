@@ -119,7 +119,7 @@ async def create_screenshot_of_traffic_light():
 if __name__ == "__main__":
     FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
     date_format = "%d.%m. %H:%M:%S"
-    logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt=date_format)
+    logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt=date_format)
     logger = logging.getLogger("euemastobot")
 
     locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
