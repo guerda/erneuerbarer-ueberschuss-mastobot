@@ -18,12 +18,11 @@ Diese Permissions braucht die Mastodon-Applikation, um Beiträge mit Medien zu v
 Installation
 ============
 
-pipenv install oder pipenv install --dev sollte ausreichen
+`uv sync` oder `uv sync --dev` sollte ausreichen
 
 Danach muss für die Screenshots Folgendes ausgeführt werden:
 
-pipenv shell
-playwright install
+    uv run playwright install
 
 Damit wird Chromium installiert, mit dem die Screenshots erzeugt werden.
 
@@ -33,4 +32,3 @@ Zusätzlich braucht Playwright noch einige System-Pakete, die sich auf Raspberry
 ```
 sudo apt install -y libgtk-4-dev libxslt1-dev libwoff-dev libenchant-2-dev libhyphen-dev libmanette-0.2-dev libgstreamer-gl1.0-0 libgstreamer-plugins-bad1.0-0
 ```
-playwright install chromium
