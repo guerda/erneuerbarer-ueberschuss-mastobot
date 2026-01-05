@@ -116,6 +116,10 @@ async def create_screenshot_of_traffic_light():
     return result["id"]
 
 
+def create_chart(forecast_object):
+    pass
+
+
 if __name__ == "__main__":
     FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
     date_format = "%d.%m. %H:%M:%S"

@@ -1,5 +1,6 @@
 import requests
 
+
 def test_request_energycharts():
     api_url = "https://api.energy-charts.info/ren_share_forecast?country=de"
     headers = {
@@ -9,4 +10,3 @@ def test_request_energycharts():
     r = requests.get(api_url, headers=headers)
     r.raise_for_status()
     assert r.status_code == 200
-
