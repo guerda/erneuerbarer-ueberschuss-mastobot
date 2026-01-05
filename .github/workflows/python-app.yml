@@ -33,4 +33,6 @@ jobs:
       run: uv run ruff check
 
     - name: Test with pytest
+      env:
+        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       run: uv run pytest
