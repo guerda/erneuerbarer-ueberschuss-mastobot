@@ -1,5 +1,6 @@
-import euemastobot as bot
 import json
+
+import euemastobot as bot
 
 
 def test_timeslot_without_threshold():

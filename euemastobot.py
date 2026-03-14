@@ -1,12 +1,13 @@
-from datetime import datetime
-from mastodon import Mastodon
-import dotenv
+import asyncio
+import locale
 import logging
 import os
+from datetime import datetime
+
+import dotenv
 import requests
-import asyncio
+from mastodon import Mastodon
 from playwright.async_api import async_playwright
-import locale
 
 threshold = 100
 mastodon = None
@@ -15,12 +16,16 @@ mastodon = None
 def get_slots_from_forecast(forecast):
     i = 0
     filter_above_threshold = []
+    slot_count = 0
+
     for row in forecast["ren_share"]:
         if row > threshold:
             filter_above_threshold.append(1)
+            slot_count += 1
         else:
             filter_above_threshold.append(0)
         i += 1
+    logging.info(f"Hours above threshold: {slot_count / 4}")
     logging.debug("Above threshold: ")
     logging.debug(filter_above_threshold)
     start = 0
@@ -47,7 +52,7 @@ def get_slots_from_forecast(forecast):
         start_text = datetime.fromtimestamp(start).strftime("%H:%M")
         end_text = "00:00"
         slots.append((start_text, end_text))
-    return slots
+    return slots, slot_count - 1  # one slot less to calculate the hours
 
 
 def get_time_slots():
@@ -61,9 +66,9 @@ def get_time_slots():
     logger.info("got the forecast data")
     forecast = r.json()
 
-    slots = get_slots_from_forecast(forecast)
+    slots, count_of_slots = get_slots_from_forecast(forecast)
 
-    return slots
+    return slots, count_of_slots
 
 
 def get_mastodon_client():
@@ -77,14 +82,20 @@ def get_mastodon_client():
     return mastodon
 
 
-def post_timeslots_to_mastodon(time_slots, attach_screenshot=False, media_id=None):
+def post_timeslots_to_mastodon(
+    time_slots, attach_screenshot=False, media_id=None, count_of_slots: int = 0
+):
     mastodon = get_mastodon_client()
     day_of_week = datetime.today().strftime("%A")
     slot_text = ", ".join(["{} - {}".format(slot[0], slot[1]) for slot in time_slots])
     status_text = """Am heutigen {} liegt zwischen {} der Anteil der erneuerbaren Energien in Deutschland voraussichtlich über {}%.
+    Das entspricht insgesamt {} Stunden erneuerbarem Überschuss.
 
 Daten via https://energy-charts.info/charts/consumption_advice/chart.htm""".format(
-        day_of_week, slot_text, threshold
+        day_of_week,
+        slot_text,
+        threshold,
+        locale.format_string("%.2f", count_of_slots / 4),
     )
     logger.debug(status_text)
     status = mastodon.status_post(status_text, language="de", media_ids=media_id)
@@ -126,11 +137,12 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt=date_format)
     logger = logging.getLogger("euemastobot")
 
-    locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
+    locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")
 
     time_slots = None
+    count_of_slots = 0
     try:
-        time_slots = get_time_slots()
+        time_slots, count_of_slots = get_time_slots()
     except Exception as e:
         logger.exception("Could not get forecast data", e)
 
@@ -148,5 +160,7 @@ if __name__ == "__main__":
                 media_id = asyncio.run(create_screenshot_of_traffic_light())
             except Exception as e:
                 logger.error("Could not create screenshot", e)
-            post_url = post_timeslots_to_mastodon(time_slots, media_id=media_id)
+            post_url = post_timeslots_to_mastodon(
+                time_slots, media_id=media_id, count_of_slots=count_of_slots
+            )
             logger.info("Successfully posted: {}".format(post_url))

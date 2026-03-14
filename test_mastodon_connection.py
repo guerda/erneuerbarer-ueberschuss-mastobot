@@ -1,6 +1,7 @@
-from mastodon import Mastodon
-import dotenv
 import os
+
+import dotenv
+from mastodon import Mastodon
 
 
 def test_mastodon_client():
