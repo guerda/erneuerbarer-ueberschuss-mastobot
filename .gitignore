@@ -1,4 +1,6 @@
+__pycache__
 .env
 *.log
 eue-mastobot-job.sh
 stromampel.png
+chart.png
