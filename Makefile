@@ -4,7 +4,7 @@ all: fmt test
 
 fmt:
 	ruff format
-	ruff check --fix
+	uv run ruff check --select I --fix
 
 test:
 	pytest
