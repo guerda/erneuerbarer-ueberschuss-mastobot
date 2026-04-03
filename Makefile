@@ -4,7 +4,11 @@ all: fmt test
 
 fmt:
 	ruff format
-	ruff check --fix
+	ruff check --select I --fix
+qa:
+	ruff check
+	ty check
+	
 
 test:
 	pytest
