@@ -8,7 +8,7 @@ dependencies = [
     "python-dotenv==1.2.2",
     "pygal==3.1.0",
     "cairosvg==2.8.2",
-    "playwright==1.59.0",
+    "playwright==1.60.0",
 ]
 
 [dependency-groups]
