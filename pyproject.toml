@@ -3,7 +3,7 @@ name = "erneuerbarer-ueberschuss-mastobot"
 version = "0.0.1"
 requires-python = ">=3.11.0, <3.15.0"
 dependencies = [
-    "requests==2.34.1",
+    "requests==2.34.2",
     "mastodon.py==2.2.1",
     "python-dotenv==1.2.2",
     "playwright==1.59.0",
