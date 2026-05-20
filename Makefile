@@ -19,3 +19,7 @@ run:
 
 changelog:
 	git-cliff -o CHANGELOG.md
+
+prepare:
+	uv sync --dev
+	uv run playwright install
