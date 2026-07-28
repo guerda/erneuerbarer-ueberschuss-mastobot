@@ -11,29 +11,32 @@ from playwright.async_api import async_playwright
 
 threshold = 100
 mastodon = None
+logger = logging.getLogger("euemastobot")
+# Determine local timezone
+now = datetime.now()  # noqa: DTZ005
+local_now = now.astimezone()
+local_tz = local_now.tzinfo
 
 
 def get_slots_from_forecast(forecast):
-    i = 0
     filter_above_threshold = []
     slot_count = 0
 
-    for row in forecast["ren_share"]:
+    for i, row in enumerate(forecast["ren_share"]):
         if row > threshold:
             filter_above_threshold.append(1)
             slot_count += 1
         else:
             filter_above_threshold.append(0)
-        i += 1
-    logging.info(f"Hours above threshold: {slot_count / 4}")
-    logging.debug("Above threshold: ")
-    logging.debug(filter_above_threshold)
+    logger.info(f"Hours above threshold: {slot_count / 4}")
+    logger.debug("Above threshold: ")
+    logger.debug(filter_above_threshold)
     start = 0
     previous = 0
     slots = []
     i = 0
     added = True
-    for time_slice in filter_above_threshold:
+    for i, time_slice in enumerate(filter_above_threshold):
         if time_slice != previous:
             previous = time_slice
             if time_slice == 1:
@@ -41,15 +44,16 @@ def get_slots_from_forecast(forecast):
                 added = False
             elif time_slice == 0:
                 end = forecast["unix_seconds"][i - 1]
-                start_text = datetime.fromtimestamp(start).strftime("%H:%M")
-                end_text = datetime.fromtimestamp(end).strftime("%H:%M")
+                start_text = datetime.fromtimestamp(start, tz=local_tz).strftime(
+                    "%H:%M"
+                )
+                end_text = datetime.fromtimestamp(end, tz=local_tz).strftime("%H:%M")
                 slots.append((start_text, end_text))
                 added = True
-        i += 1
 
     # If the threshold was exceeded at the end, has it been added to the array yet?
     if not added:
-        start_text = datetime.fromtimestamp(start).strftime("%H:%M")
+        start_text = datetime.fromtimestamp(start, tz=local_tz).strftime("%H:%M")
         end_text = "00:00"
         slots.append((start_text, end_text))
     return slots, slot_count - 1  # one slot less to calculate the hours
@@ -86,8 +90,8 @@ def post_timeslots_to_mastodon(
     time_slots, attach_screenshot=False, media_id=None, count_of_slots: int = 0
 ):
     mastodon = get_mastodon_client()
-    day_of_week = datetime.today().strftime("%A")
-    slot_text = ", ".join(["{} - {}".format(slot[0], slot[1]) for slot in time_slots])
+    day_of_week = datetime.today().astimezone().strftime("%A")
+    slot_text = ", ".join([f"{slot[0]} - {slot[1]}" for slot in time_slots])
     status_text = """Am heutigen {} liegt zwischen {} der Anteil der erneuerbaren Energien in Deutschland voraussichtlich über {}%.
     Das entspricht insgesamt {} Stunden erneuerbarem Überschuss.
 
@@ -135,7 +139,6 @@ if __name__ == "__main__":
     FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
     date_format = "%d.%m. %H:%M:%S"
     logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt=date_format)
-    logger = logging.getLogger("euemastobot")
 
     locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")
 
@@ -143,24 +146,22 @@ if __name__ == "__main__":
     count_of_slots = 0
     try:
         time_slots, count_of_slots = get_time_slots()
-    except Exception as e:
-        logger.exception("Could not get forecast data", e)
+    except Exception:
+        logger.exception("Could not get forecast data")
 
     if time_slots is not None:
         if len(time_slots) == 0:
             logger.info(
-                "No time slots with energy above threshold of {}% found".format(
-                    threshold
-                )
+                f"No time slots with energy above threshold of {threshold}% found"
             )
         else:
             dotenv.load_dotenv()
             media_id = None
             try:
                 media_id = asyncio.run(create_screenshot_of_traffic_light())
-            except Exception as e:
-                logger.error("Could not create screenshot", e)
+            except Exception:
+                logger.exception("Could not create screenshot")
             post_url = post_timeslots_to_mastodon(
                 time_slots, media_id=media_id, count_of_slots=count_of_slots
             )
-            logger.info("Successfully posted: {}".format(post_url))
+            logger.info(f"Successfully posted: {post_url}")
