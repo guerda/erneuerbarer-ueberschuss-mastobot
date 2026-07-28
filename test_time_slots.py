@@ -70,7 +70,7 @@ def _create_forecast_object(percentages):
     # Unix seconds resolution is 900
     timestamp_start = 1734735600
     result = {
-        "unix_seconds": [x * 900 + timestamp_start for x in range(0, len(percentages))],
+        "unix_seconds": [x * 900 + timestamp_start for x in range(len(percentages))],
         "ren_share": percentages,
         "substitute": False,
         "deprecated": False,
