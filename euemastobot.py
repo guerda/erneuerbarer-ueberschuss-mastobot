@@ -13,9 +13,10 @@ threshold = 100
 mastodon = None
 logger = logging.getLogger("euemastobot")
 # Determine local timezone
-now = datetime.now()
+now = datetime.now()  # noqa: DTZ005
 local_now = now.astimezone()
 local_tz = local_now.tzinfo
+
 
 def get_slots_from_forecast(forecast):
     filter_above_threshold = []
@@ -43,7 +44,9 @@ def get_slots_from_forecast(forecast):
                 added = False
             elif time_slice == 0:
                 end = forecast["unix_seconds"][i - 1]
-                start_text = datetime.fromtimestamp(start, tz=local_tz).strftime("%H:%M")
+                start_text = datetime.fromtimestamp(start, tz=local_tz).strftime(
+                    "%H:%M"
+                )
                 end_text = datetime.fromtimestamp(end, tz=local_tz).strftime("%H:%M")
                 slots.append((start_text, end_text))
                 added = True
