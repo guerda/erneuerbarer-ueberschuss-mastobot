@@ -87,7 +87,7 @@ def post_timeslots_to_mastodon(
 ):
     mastodon = get_mastodon_client()
     day_of_week = datetime.today().strftime("%A")
-    slot_text = ", ".join(["{} - {}".format(slot[0], slot[1]) for slot in time_slots])
+    slot_text = ", ".join([f"{slot[0]} - {slot[1]}" for slot in time_slots])
     status_text = """Am heutigen {} liegt zwischen {} der Anteil der erneuerbaren Energien in Deutschland voraussichtlich über {}%.
     Das entspricht insgesamt {} Stunden erneuerbarem Überschuss.
 
@@ -149,9 +149,7 @@ if __name__ == "__main__":
     if time_slots is not None:
         if len(time_slots) == 0:
             logger.info(
-                "No time slots with energy above threshold of {}% found".format(
-                    threshold
-                )
+                f"No time slots with energy above threshold of {threshold}% found"
             )
         else:
             dotenv.load_dotenv()
@@ -163,4 +161,4 @@ if __name__ == "__main__":
             post_url = post_timeslots_to_mastodon(
                 time_slots, media_id=media_id, count_of_slots=count_of_slots
             )
-            logger.info("Successfully posted: {}".format(post_url))
+            logger.info(f"Successfully posted: {post_url}")
