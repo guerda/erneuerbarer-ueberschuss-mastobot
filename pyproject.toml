@@ -7,6 +7,7 @@ dependencies = [
     "mastodon.py==2.2.2",
     "python-dotenv==1.2.3",
     "playwright==1.62.0",
+    "python-ntfy>=0.11.2",
 ]
 
 [dependency-groups]
