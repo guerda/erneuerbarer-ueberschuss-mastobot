@@ -8,6 +8,7 @@ import dotenv
 import requests
 from mastodon import Mastodon
 from playwright.async_api import async_playwright
+from python_ntfy import NtfyClient
 
 threshold = 100
 mastodon = None
@@ -141,13 +142,17 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt=date_format)
 
     locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")
-
+    ntfy = NtfyClient(
+        topic="erneuerbarer-ueberschuss", server="https://ntfy.local.guerda.de"
+    )
     time_slots = None
     count_of_slots = 0
     try:
         time_slots, count_of_slots = get_time_slots()
     except Exception:
-        logger.exception("Could not get forecast data")
+        msg = "Could not retrieve forecast data"
+        logger.exception(msg)
+        ntfy.send(msg)
 
     if time_slots is not None:
         if len(time_slots) == 0:
@@ -160,7 +165,9 @@ if __name__ == "__main__":
             try:
                 media_id = asyncio.run(create_screenshot_of_traffic_light())
             except Exception:
-                logger.exception("Could not create screenshot")
+                msg = "Could not create screenshot"
+                logger.exception(msg)
+                ntfy.send(msg)
             post_url = post_timeslots_to_mastodon(
                 time_slots, media_id=media_id, count_of_slots=count_of_slots
             )
