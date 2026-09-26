@@ -22,7 +22,7 @@ Installation
 
 Danach muss für die Screenshots Folgendes ausgeführt werden:
 
-    uv run playwright install
+    uv run playwright install chromium
 
 Damit wird Chromium installiert, mit dem die Screenshots erzeugt werden.
 
