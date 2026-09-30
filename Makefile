@@ -4,7 +4,7 @@ all: fmt test qa deps
 
 fmt:
 	ruff format
-	ruff check --select I --fix
+
 qa:
 	ruff check
 	ty check
