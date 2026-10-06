@@ -5,15 +5,15 @@ requires-python = ">=3.11.0, <3.15.0"
 dependencies = [
     "cairosvg==2.8.2",
     "mastodon.py==2.2.2",
-    "python-dotenv==1.2.3",
     "pygal==3.1.0",
+    "python-dotenv==1.2.4",
     "python-ntfy>=0.11.2",
     "requests==2.34.2",
 ]
 
 [dependency-groups]
 dev = [
-    "ruff==0.16.9",
+    "ruff==0.16.10",
     "pytest==9.1.1",
     "ty>=0.0.28",
     "pip-audit>=2.10.0",
