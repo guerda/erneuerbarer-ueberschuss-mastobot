@@ -109,36 +109,12 @@ Daten via https://energy-charts.info/charts/consumption_advice/chart.htm""".form
     logger.debug(status_text)
     visibility = "public"
     if dry_run:
-        visibility = "direct" # private is for followers only
+        visibility = "direct"  # private is for followers only
     status = mastodon.status_post(
         status_text, language="de", media_ids=media_id, visibility=visibility
     )
     logger.info("Posted status #{} ({})".format(status["id"], status["created_at"]))
     return status["url"]
-
-
-async def create_screenshot_of_traffic_light():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        page = await browser.new_page(locale="de-DE")
-        await page.set_viewport_size({"width": 765, "height": 500})
-        await page.goto(
-            "https://energy-charts.info/charts/consumption_advice/chart.htm?l=de&c=DE"
-        )
-        await page.locator("div#inhalt .chartCard:first-child").screenshot(
-            path="stromampel.png"
-        )
-        await browser.close()
-    logger.info("Created screenshot")
-    mastodon = get_mastodon_client()
-    result = mastodon.media_post(
-        "stromampel.png",
-        description="Screenshot of energy-charts.info"
-        "s traffic light for energy production",
-        file_name="Stromampel.png",
-    )
-    logger.info("Uploaded screenshot with ID {}".format(result["id"]))
-    return result["id"]
 
 
 def create_chart(forecast_object):
@@ -147,7 +123,7 @@ def create_chart(forecast_object):
     one_hundred_percent_line = []
     current_day = None
     for i, timestamp in enumerate(forecast_object["unix_seconds"]):
-        ts = datetime.fromtimestamp(timestamp, None)
+        ts = datetime.fromtimestamp(timestamp, tz=local_tz)
         if current_day is None:
             current_day = ts.date()
         # If the next day comes, abort
