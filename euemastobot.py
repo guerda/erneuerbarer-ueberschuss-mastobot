@@ -161,18 +161,17 @@ def create_chart(forecast_object):
 if __name__ == "__main__":
     FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
     date_format = "%d.%m. %H:%M:%S"
-    logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt=date_format)
+    logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt=date_format)
 
     locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")
     ntfy = NtfyClient(
         topic="erneuerbarer-ueberschuss", server="https://ntfy.local.guerda.de"
     )
 
+    dry_run = False
     if logger.getEffectiveLevel() == logging.DEBUG:
         logger.debug("Debug level activated, therefore dry_run activated")
         dry_run = True
-    else:
-        dry_run = False
 
     time_slots = None
     count_of_slots = 0
