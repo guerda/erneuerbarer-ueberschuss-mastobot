@@ -1,13 +1,14 @@
-import asyncio
+import argparse
 import locale
 import logging
 import os
 from datetime import datetime
 
 import dotenv
+import pygal
 import requests
 from mastodon import Mastodon
-from playwright.async_api import async_playwright
+from pygal.style import *
 from python_ntfy import NtfyClient
 
 threshold = 100
@@ -73,7 +74,7 @@ def get_time_slots():
 
     slots, count_of_slots = get_slots_from_forecast(forecast)
 
-    return slots, count_of_slots
+    return slots, count_of_slots, forecast
 
 
 def get_mastodon_client():
@@ -88,7 +89,11 @@ def get_mastodon_client():
 
 
 def post_timeslots_to_mastodon(
-    time_slots, attach_screenshot=False, media_id=None, count_of_slots: int = 0
+    time_slots,
+    attach_screenshot=False,
+    media_id=None,
+    count_of_slots: int = 0,
+    dry_run: bool = False,
 ):
     mastodon = get_mastodon_client()
     day_of_week = datetime.today().astimezone().strftime("%A")
@@ -103,52 +108,83 @@ Daten via https://energy-charts.info/charts/consumption_advice/chart.htm""".form
         locale.format_string("%.2f", count_of_slots / 4),
     )
     logger.debug(status_text)
-    status = mastodon.status_post(status_text, language="de", media_ids=media_id)
+    visibility = "public"
+    if dry_run:
+        visibility = "direct"  # private is for followers only
+    status = mastodon.status_post(
+        status_text, language="de", media_ids=media_id, visibility=visibility
+    )
     logger.info("Posted status #{} ({})".format(status["id"], status["created_at"]))
     return status["url"]
 
 
-async def create_screenshot_of_traffic_light():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        page = await browser.new_page(locale="de-DE")
-        await page.set_viewport_size({"width": 765, "height": 500})
-        await page.goto(
-            "https://energy-charts.info/charts/consumption_advice/chart.htm?l=de&c=DE"
-        )
-        await page.locator("div#inhalt .chartCard:first-child").screenshot(
-            path="stromampel.png"
-        )
-        await browser.close()
-    logger.info("Created screenshot")
+def create_chart(forecast_object):
+    chart_file_name = "chart.png"
+    series = []
+    one_hundred_percent_line = []
+    current_day = None
+    for i, timestamp in enumerate(forecast_object["unix_seconds"]):
+        ts = datetime.fromtimestamp(timestamp, tz=local_tz)
+        if current_day is None:
+            current_day = ts.date()
+        # If the next day comes, abort
+        if current_day.day != ts.day:
+            break
+        series.append((ts, forecast_object["ren_share"][i]))
+    # Only append the first and last timestamp to 100% line
+    one_hundred_percent_line.append((series[0][0], 100))
+    one_hundred_percent_line.append((series[-1][0], 100))
+
+    darken_style = Style(colors=("#15d863", "#083D77"))
+    line_chart = pygal.TimeLine(
+        x_label_rotation=25,
+        legend_at_bottom=True,
+        style=darken_style,
+        interpolate="cubic",
+    )
+    line_chart.title = f"Erneuerbarer Überschuss für {current_day}"
+
+    line_chart.add("100%", one_hundred_percent_line, fill=True)
+    line_chart.add("Anteil erneuerbarer Energien", series)
+    line_chart.render_to_png(chart_file_name)
+    logger.info(f"Plotted chart to {chart_file_name}")
+
     mastodon = get_mastodon_client()
     result = mastodon.media_post(
-        "stromampel.png",
-        description="Screenshot of energy-charts.info"
-        "s traffic light for energy production",
-        file_name="Stromampel.png",
+        chart_file_name,
+        description=f"Verlauf des Anteils erneuerbaren Energien für {current_day}",
+        file_name="Überschuss erneuerbarer Energien.png",
     )
     logger.info("Uploaded screenshot with ID {}".format(result["id"]))
     return result["id"]
 
 
-def create_chart(forecast_object):
-    pass
-
-
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog="eue-mastobot", description="")
+    parser.add_argument("-d", "--dry-run", action="store_true", default=False)
+    parser.add_argument("-v", "--verbose", action="store_true", default=False)
+    args = parser.parse_args()
+
     FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
     date_format = "%d.%m. %H:%M:%S"
-    logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt=date_format)
+    level = logging.INFO
+    if args.verbose:
+        level = logging.DEBUG
+    logging.basicConfig(level=level, format=FORMAT, datefmt=date_format)
 
     locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")
     ntfy = NtfyClient(
         topic="erneuerbarer-ueberschuss", server="https://ntfy.local.guerda.de"
     )
+
+    if args.dry_run:
+        logger.debug("Debug level activated, therefore dry_run activated")
+
     time_slots = None
     count_of_slots = 0
+    forecast = None
     try:
-        time_slots, count_of_slots = get_time_slots()
+        time_slots, count_of_slots, forecast = get_time_slots()
     except Exception:
         msg = "Could not retrieve forecast data"
         logger.exception(msg)
@@ -163,12 +199,15 @@ if __name__ == "__main__":
             dotenv.load_dotenv()
             media_id = None
             try:
-                media_id = asyncio.run(create_screenshot_of_traffic_light())
+                media_id = create_chart(forecast)
             except Exception:
-                msg = "Could not create screenshot"
+                msg = "Could not plot chart"
                 logger.exception(msg)
                 ntfy.send(msg)
             post_url = post_timeslots_to_mastodon(
-                time_slots, media_id=media_id, count_of_slots=count_of_slots
+                time_slots,
+                media_id=media_id,
+                count_of_slots=count_of_slots,
+                dry_run=args.dry_run,
             )
             logger.info(f"Successfully posted: {post_url}")
