@@ -1,3 +1,4 @@
+import argparse
 import locale
 import logging
 import os
@@ -159,19 +160,25 @@ def create_chart(forecast_object):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog="eue-mastobot", description="")
+    parser.add_argument("-d", "--dry-run", action="store_true", default=False)
+    parser.add_argument("-v", "--verbose", action="store_true", default=False)
+    args = parser.parse_args()
+
     FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
     date_format = "%d.%m. %H:%M:%S"
-    logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt=date_format)
+    level = logging.INFO
+    if args.verbose:
+        level = logging.DEBUG
+    logging.basicConfig(level=level, format=FORMAT, datefmt=date_format)
 
     locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")
     ntfy = NtfyClient(
         topic="erneuerbarer-ueberschuss", server="https://ntfy.local.guerda.de"
     )
 
-    dry_run = False
-    if logger.getEffectiveLevel() == logging.DEBUG:
+    if args.dry_run:
         logger.debug("Debug level activated, therefore dry_run activated")
-        dry_run = True
 
     time_slots = None
     count_of_slots = 0
@@ -201,6 +208,6 @@ if __name__ == "__main__":
                 time_slots,
                 media_id=media_id,
                 count_of_slots=count_of_slots,
-                dry_run=dry_run,
+                dry_run=args.dry_run,
             )
             logger.info(f"Successfully posted: {post_url}")
