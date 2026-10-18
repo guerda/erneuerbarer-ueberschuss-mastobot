@@ -15,7 +15,7 @@ threshold = 100
 mastodon = None
 logger = logging.getLogger("euemastobot")
 # Determine local timezone
-now = datetime.now()  # noqa: DTZ005
+now = datetime.now()
 local_now = now.astimezone()
 local_tz = local_now.tzinfo
 
