@@ -298,7 +298,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cairosvg", specifier = ">=2.9.1" },
-    { name = "mastodon-py", specifier = "==2.3.2" },
+    { name = "mastodon-py", specifier = "==2.3.3" },
     { name = "pygal", specifier = ">=3.1.0" },
     { name = "python-dotenv", specifier = "==1.2.4" },
     { name = "python-ntfy", specifier = ">=0.11.2" },
@@ -378,16 +378,16 @@ wheels = [
 
 [[package]]
 name = "mastodon-py"
-version = "2.3.2"
+version = "2.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "decorator" },
     { name = "python-dateutil" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/69/27/d470285f4460ec86c320d3cf47ac7cd93c1d14c85efdec6cc6578d1fc010/mastodon_py-2.3.2.tar.gz", hash = "sha256:b8e1dbd4d1cc6bd363cd84a39cd23cd0717f806e6a29742c6ead1c221f478422", size = 12266588, upload-time = "2026-10-18T11:42:30.722Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/16/13/3e6cf9e6f30c7badcae067e560306c018058062985ed826fbe82e5476faa/mastodon_py-2.3.3.tar.gz", hash = "sha256:a3cda3db86d65809957c978aef8ac7fb3dfc93abfeda3f1c6bdef4c79090ab7b", size = 12266769, upload-time = "2026-10-18T13:12:37.097Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fe/83/f69af691ee493f67ddb4ba1e90f97eee5eddafe59b0046492c56231ce22f/mastodon_py-2.3.2-py3-none-any.whl", hash = "sha256:34967410dce913a5f2021ca72d81fdab7e0e59b87217eb16adb88803a67d0bb0", size = 147431, upload-time = "2026-10-18T11:42:28.807Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/60/3f4b34b1c0a0095871d6649615e962b41fc81451ebdc4a2c7eece7990829/mastodon_py-2.3.3-py3-none-any.whl", hash = "sha256:12fccdbc3765bb4d06079eb7cf8e37aca6d06ec6a48da993141dd865955d5444", size = 147431, upload-time = "2026-10-18T13:12:35.22Z" },
 ]
 
 [[package]]
